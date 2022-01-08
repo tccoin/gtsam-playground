@@ -1,0 +1,82 @@
+cmake_minimum_required(VERSION 3.22)
+
+# Project name
+project(gtsam_backend)
+
+# Include our cmake files
+SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
+# LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../cmake)
+
+# Find catkin (the ROS build system)
+
+# Include libraries
+find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time)
+find_package(GTSAM REQUIRED) # source: https://bitbucket.org/gtborg/gtsam/
+find_package(MKL REQUIRED) # intel MKL library
+find_package(TBB REQUIRED)
+
+# Try to compile with c++11
+# http://stackoverflow.com/a/25836953
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
+# Enable compile optimizations
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fsee -fomit-frame-pointer -fno-signed-zeros -fno-math-errno -funroll-loops")
+
+# Enable debug flags (use if you want to debug in gdb)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall")
+
+# Include all thirdparty source files in build
+# NOTE: we need Eigen since GTSAM is picky about what Eigen it will use
+# file(GLOB_RECURSE external_headers 3rdparty/*.h 3rdparty/*.hpp)
+# file(GLOB_RECURSE external_sources 3rdparty/*.cpp)
+
+# Include our header files
+include_directories(
+    src
+    external
+    #${EIGEN3_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${MKL_INCLUDE_DIR}
+    ${GTSAM_INCLUDE_DIR}
+    ${catkin_INCLUDE_DIRS}
+)
+
+# Set link libraries used by all binaries
+list(APPEND thirdparty_libraries
+    ${Boost_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+    ${MKL_LIBRARIES}
+    tbb
+    tbbmalloc
+    gtsam
+    gtsam_unstable
+    ${catkin_LIBRARIES}
+)
+
+
+
+##################################################
+# Make binary files!
+##################################################
+add_executable(OdometryExample
+        src/OdometryExample.cpp
+)
+target_link_libraries(OdometryExample ${thirdparty_libraries})
+
+
+
+
+
+
+
